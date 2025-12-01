@@ -6,13 +6,50 @@ let input =
     |> List.ofSeq
 
 let example =
-    """hehe""".Split("\n")
+    """L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82""".Split("\n")
     |> Array.map (fun s -> s.Trim())
     |> List.ofSeq
 
+type Direction = L | R
+
+let parse (line: string) =
+    let dir =
+        match line[0] with
+        | 'L' -> L
+        | 'R' -> R
+        | _ -> failwith "Invalid direction"
+    let dist = line.[1..] |> int
+    (dir, dist)
+    
+let execute (start: int) (instruction: Direction * int) =
+    let (dir, dist) = instruction
+    match dir with
+    | L -> (start - dist) % 100
+    | R -> (start + dist) % 100
+let solve input =  
+    let instructions = input |> List.map parse
+    instructions |> List.scan execute 50 |> List.filter ((=) 0) |> List.length
+
 let run () =
     printf "Testing.."
-    test <@ 1 + 1 = 2 @>
+    test <@ execute 50 (R, 1) = 51 @>
+    test <@ execute 99 (R, 1) = 0 @>
+    test <@ execute 0 (L, 1) = 99 @>
+    test <@ execute 99 (R, 101) = 0 @>
+    test <@ execute 0 (L, 101) = 99 @>
+    
+    test <@ solve example = 3 @>
     printfn "...done!"
 
 run ()
+
+solve input //915
