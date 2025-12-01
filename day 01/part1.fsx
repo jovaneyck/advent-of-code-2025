@@ -29,12 +29,21 @@ let parse (line: string) =
         | _ -> failwith "Invalid direction"
     let dist = line.[1..] |> int
     (dir, dist)
+ 
+//Note to future self: remainder operator (%) is NOT modulo for negative numbers
+let inline (mod) D d =
+    let r = D % d
+    if r >= 0 then r
+    elif d >= 0 then r + d
+    else r - d
     
 let execute (start: int) (instruction: Direction * int) =
     let (dir, dist) = instruction
-    match dir with
-    | L -> (start - dist) % 100
-    | R -> (start + dist) % 100
+    let result = 
+        match dir with
+        | L -> start - dist
+        | R -> start + dist
+    result mod 100
 let solve input =  
     let instructions = input |> List.map parse
     instructions |> List.scan execute 50 |> List.filter ((=) 0) |> List.length
@@ -52,4 +61,4 @@ let run () =
 
 run ()
 
-solve input //915
+solve input
