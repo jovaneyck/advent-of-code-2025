@@ -1,3 +1,5 @@
+//https://en.wikipedia.org/wiki/Modulo
+
 #r "nuget: Unquote"
 open Swensen.Unquote
 
@@ -30,52 +32,33 @@ let parse (line: string) =
     let dist = line.[1..] |> int
     (dir, dist)
  
-let inline (mod) D d =
-    let r = D % d
-    if r >= 0 then r
-    elif d >= 0 then r + d
-    else r - d
-    
-let inline floorDiv a b =
-    let q = a / b
-    let r = a % b
-    if (r > 0 && b < 0) || (r < 0 && b > 0) then q - 1 else q
+let inline (mod) a n =
+    let r = a % n
+    if r >= 0 then r else r + n
 
 type State = { PassedZero: int; Position: int }
 
 let execute (start: State) (instruction: Direction * int) : State =
     let (dir, dist) = instruction
-    let newPos =
+    let offset =
         match dir with
-        | L -> start.Position - dist
-        | R -> start.Position + dist
-    
+        | L -> -1 * dist
+        | R -> dist
+    let nextPosition = (start.Position + offset) mod 100
     let passedZero =
-        if dist = 0 then
-            0
-        else
-            match dir with
-            | L ->
-                let rangeStart = start.Position - dist
-                let rangeEnd = start.Position - 1
-                
-                let firstMult = floorDiv (rangeStart + 99) 100 * 100
-                let lastMult = floorDiv rangeEnd 100 * 100
-                
-                if firstMult > lastMult then 0
-                else (lastMult - firstMult) / 100 + 1
-                
-            | R ->
-                let rangeStart = start.Position + 1
-                let rangeEnd = start.Position + dist
-                
-                let firstMult = floorDiv (rangeStart + 99) 100 * 100
-                let lastMult = floorDiv rangeEnd 100 * 100
-                
-                if firstMult > lastMult then 0
-                else (lastMult - firstMult) / 100 + 1
+        match dir with
+        | R ->
+            (start.Position + offset) / 100
+        | L ->
+            if start.Position = 0 then
+                dist / 100
+            else
+                if dist >= start.Position then
+                    (dist - start.Position) / 100 + 1
+                else
+                    0
     
-    { PassedZero = start.PassedZero + passedZero; Position = newPos mod 100 }
+    { PassedZero = start.PassedZero + passedZero; Position = nextPosition }
 
 let solve input =  
     let instructions = input |> List.map parse
@@ -84,7 +67,14 @@ let solve input =
 let run () =
     printf "Testing.."
     
-    // Original tests
+    test <@ 0 mod 100 = 0 @>
+    test <@ 1 mod 100 = 1 @>
+    test <@ 100 mod 100 = 0 @>
+    test <@ 101 mod 100 = 1 @>
+    test <@ -1 mod 100 = 99 @>
+    test <@ -101 mod 100 = 99 @>
+    test <@ -201 mod 100 = 99 @>
+    
     test <@ execute { Position = 1; PassedZero = 0 } (L, 1) = { Position = 0; PassedZero = 1 } @>
     test <@ execute { Position = 50; PassedZero = 0 } (L, 68) = { Position = 82; PassedZero = 1 } @>
     test <@ execute { Position = 50; PassedZero = 0 } (R, 1_000) = { Position = 50; PassedZero = 10 } @>
