@@ -17,31 +17,29 @@ let parseBank (line: string) =
     line
     |> Seq.map (string >> int)
     |> Seq.toList
-
-let rec batteries nb  (bank : int list) : int list list =
-    if nb = 0 then [[]]
+    
+let rec solve acc nb (bank : int list) : int list =
+    if nb = 0 then acc |> List.rev
+    elif nb = bank.Length then (acc |> List.rev) @ bank
     else
-        [for (i, battery) in bank |> List.indexed do
-            let rest = bank |> List.skip (i + 1)
-            (batteries (nb - 1) rest) |> List.map (fun b -> battery :: b)]
-        |> List.collect id
- 
-let joltage selection =
-    selection
-    |> List.map string
-    |> String.concat ""
-    |> int64
-        
-let banks = input |> List.map parseBank
-banks |> List.map (fun bank ->
-    printfn $"Starting on bank {bank}"
-    let selections = batteries 12 bank |> List.distinct     
-    selections |> List.map joltage |> List.max)
-|> List.sum
+        let splitIndex = bank.Length - (nb - 1)
+        let candidates = List.take splitIndex bank
+        let (idxnext, next) = candidates |> List.indexed |> List.maxBy snd
+        let remainingBank = bank |> List.skip (idxnext + 1)
+        solve (next :: acc) (nb - 1) remainingBank
 
+let solver example =
+    example
+    |> List.map parseBank
+    |> List.map (solve [] 12)
+    |> List.map (List.map string >> String.concat "" >> int64)
+    |> List.sum
+    
+solver input
+    
 let run () =
     printf "Testing.."
-    test <@ 1 + 1 = 2 @>
+    test <@ solver example = 3121910778619L @>
     printfn "...done!"
 
 run ()
